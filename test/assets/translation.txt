@@ -1,0 +1,2 @@
+[just%20another%20key]
+{"meta":{},"translations":{}}
