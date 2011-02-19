@@ -270,7 +270,7 @@ test
 	.add('testing updating of key meta data', function(spec) {
 		var origData = l.getMeta('bla');
 		var createdAt = origData.createdAt;
-		
+
 		l.updateKey('bla', { creator: 'not me', more: 'something' });
 		var data = l.getMeta('bla');
 		assert.equal(Object.keys(data).length, 3, 'There should be three meta data now');
@@ -291,9 +291,27 @@ test
 		assert.equal(data.more, 'something', 'more data should not have changed');
 		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
 	})
+	.add('testing renaming of a key', function(spec) {
+		var origData = l.getMeta('bla');
+		var createdAt = origData.createdAt;
+
+		l.renameKey('bla', 'blubb');
+		assert.ok(!l.keyExists('bla'), 'Key bla should not exist anymore');
+		
+		var data = l.getMeta('blubb');
+		assert.equal(Object.keys(data).length, 3, 'There should be three meta data');
+		assert.equal(data.creator, 'me', 'the creator should not have changed');
+		assert.equal(data.more, 'something', 'more data should not have changed');
+		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
+		assert.throws(function() {
+			l.renameKey('blubb', 'test');
+		}, Error, 'renaming into an already existing key should throw an error');
+		assert.throws(function() {
+			l.renameKey('notthere', 'notthereeither');
+		}, Error, 'renaming of a not existing key should throw an error');
+	})
 	// TODO: test überschneidungen (sortiert nach times) check nach meta gleichness (author & createdAt)?
 	// TODO: exporting nach languages und only key: texts
-	// TODO: renaming of keys
 	.serial(function() {
 		console.log('Translations should be working!');
 	});

@@ -61,6 +61,9 @@ module.exports = function(options) {
     });
   }
   
+  /**
+   * This is actually not really used, because partially loading isn't supported right now, and the file should be overridden on save anyway
+   */
   function deleteKeys(keys, callback) {
     if (!Array.isArray(keys)) {
       keys = [keys];

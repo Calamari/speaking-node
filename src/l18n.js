@@ -175,6 +175,22 @@ module.exports = function(options) {
 	}
 
 	/**
+	 * Renames a key
+	 * @param {String} key Key to rename
+	 * @param {String} newKey New Name for that key
+	 *
+	 * @throws 'Key already exist'-Exception if key already exists we want name it to
+	 * @throws 'Key doesn\'t exist'-Exception if key doesn't exist
+	 */
+	function renameKey(key, newKey) {
+		if (!translations[key]) throw new Error('Key doesn\'t exist');
+		if (translations[newKey]) throw new Error('Key already exist');
+		
+		translations[newKey] = translations[key];
+		delete translations[key];
+	}
+
+	/**
 	 * Checks if key exists
 	 * @returns {Boolean} Whether it exists or not
 	 */
@@ -255,6 +271,7 @@ module.exports = function(options) {
 		createKey:             createKey,
 		deleteKey:             deleteKey,
 		updateKey:             updateKey,
+		renameKey:             renameKey,
 		keyExists:             keyExists,
 		getMeta:               getMeta,
 		getAllMetadata:        getAllMetadata,
