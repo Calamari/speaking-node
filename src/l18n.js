@@ -182,6 +182,18 @@ module.exports = function(options) {
 	}
 	
 	/**
+	 * Returns all actually defined keys with meta data
+	 * @returns {Object} keys are keys, and value is object containing the metadata
+	 */
+	function getAllMetadata() {
+		var result = {};
+		Object.keys(translations).forEach(function(key) {
+			result[key] = translations[key].meta || {};
+		});
+		return result;
+	}
+	
+	/**
 	 * Returns list of all defined langauages for this ressouce
 	 * @param {String} key The key
 	 * @returns {Array} All defined locales
@@ -230,6 +242,7 @@ module.exports = function(options) {
 		deleteKey:             deleteKey,
 		keyExists:             keyExists,
 		getMeta:               getMeta,
+		getAllMetadata:        getAllMetadata,
 		getDefinedLanguages:   getDefinedLanguages,
 		flush:                 flush,
 		load:                  load

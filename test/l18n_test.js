@@ -250,12 +250,27 @@ test
 		assert.throws(function() {
 			l.getTranslations('values');
 		}, Error, 'there should be no key values anymore');
-		
+
 		l.flush();
 		assert.equal(deleteWasCalled, 1, 'The delete method of storage engine should now be called');
 	})
+	.add('testing getting of all keys with metas', function(spec) {
+		l.createKey('bla', { creator: 'me' });
+		var data = l.getAllMetadata();
+		console.log(data);
+		assert.equal(Object.keys(data).length, 4, 'There should be two keys');
+		assert.ok(data.bla, 'key bla should exists');
+		assert.ok(data.test, 'key test should exists');
+		assert.ok(data.test1, 'key test should exists');
+		assert.ok(data.testtwo, 'key test should exists');
+		assert.equal(Object.keys(data.test).length, 1, 'key test should have no meta data except createdAt');
+		assert.ok(data.test.createdAt, 'key test should have no meta data except createdAt');
+		assert.equal(data.bla.creator, 'me', 'key bla should have a creator as meta data');
+	})
 	// TODO: test überschneidungen (sortiert nach times) check nach meta gleichness (author & createdAt)?
 	// TODO: exporting nach languages und only key: texts
+	// TODO: renaming of keys
+	// TODO: update of key meta data
 	.serial(function() {
 		console.log('Translations should be working!');
 	});
