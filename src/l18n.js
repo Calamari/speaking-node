@@ -254,7 +254,7 @@ module.exports = function(options) {
 	 * Loads all translations from storage engine
 	 */
 	function load(callback) {
-		var loaded = storageEngine.load(function(loaded) {
+		var loaded = storageEngine.load(function(err, loaded) {
 			for (var i in loaded) {
 				translations[i] = loaded[i];
 			}
