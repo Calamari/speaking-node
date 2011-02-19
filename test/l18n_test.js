@@ -257,7 +257,7 @@ test
 	.add('testing getting of all keys with metas', function(spec) {
 		l.createKey('bla', { creator: 'me' });
 		var data = l.getAllMetadata();
-		console.log(data);
+
 		assert.equal(Object.keys(data).length, 4, 'There should be two keys');
 		assert.ok(data.bla, 'key bla should exists');
 		assert.ok(data.test, 'key test should exists');
@@ -267,10 +267,33 @@ test
 		assert.ok(data.test.createdAt, 'key test should have no meta data except createdAt');
 		assert.equal(data.bla.creator, 'me', 'key bla should have a creator as meta data');
 	})
+	.add('testing updating of key meta data', function(spec) {
+		var origData = l.getMeta('bla');
+		var createdAt = origData.createdAt;
+		
+		l.updateKey('bla', { creator: 'not me', more: 'something' });
+		var data = l.getMeta('bla');
+		assert.equal(Object.keys(data).length, 3, 'There should be three meta data now');
+		assert.equal(data.creator, 'not me', 'the creator should now be not me');
+		assert.equal(data.more, 'something', 'more data should be appended');
+		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
+
+		l.updateKey('bla', { creator: 'me' });
+		data = l.getMeta('bla');
+		assert.equal(Object.keys(data).length, 3, 'There should still be three meta data');
+		assert.equal(data.creator, 'me', 'the creator should again be not me');
+		assert.equal(data.more, 'something', 'more data should still be there');
+
+		l.updateKey('bla');
+		data = l.getMeta('bla');
+		assert.equal(Object.keys(data).length, 3, 'There should still be three meta data');
+		assert.equal(data.creator, 'me', 'the creator should not have changed');
+		assert.equal(data.more, 'something', 'more data should not have changed');
+		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
+	})
 	// TODO: test überschneidungen (sortiert nach times) check nach meta gleichness (author & createdAt)?
 	// TODO: exporting nach languages und only key: texts
 	// TODO: renaming of keys
-	// TODO: update of key meta data
 	.serial(function() {
 		console.log('Translations should be working!');
 	});

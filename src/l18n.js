@@ -10,7 +10,7 @@
  */
 module.exports = function(options) {
 	options = options || {};
-	
+
 	// setup which storageEngine to Use
 	options.storageEngine = options.storageEngine || require(__dirname + '/l18n_file_storage.js');
 	// some options to pass to the storageEngine
@@ -24,11 +24,11 @@ module.exports = function(options) {
 
 
 	initialize();
-	
+
 	function initialize() {
 		storageEngine = options.storageEngine(options.storageEngineOptions);
 	}
-	
+
 
 	/**
 	 * Returns the translated ressource in given language
@@ -99,7 +99,7 @@ module.exports = function(options) {
 		}
 		return translations[key].translations[lang];
 	}
-	
+
 	/**
 	 *
 	 * @param {String} key The storage key
@@ -127,7 +127,7 @@ module.exports = function(options) {
 			modifiedAt: new Date()
 		});
 	}
-	
+
 	/**
 	 * Generates a key that can have translations
 	 * @param {String} key The key
@@ -142,7 +142,7 @@ module.exports = function(options) {
 	function createKey(key, meta) {
 		if (!key) { return; }
 		if (translations[key]) throw new Error('Key already exist');
-		
+
 		translations[key] = {
 			meta: meta || {},
 			translations: {}
@@ -152,11 +152,25 @@ module.exports = function(options) {
 
 	/**
 	 * Deletes a key
+	 * @param {String} key Key to delete
 	 */
 	function deleteKey(key) {
 		if(key) {
 			toDelete.push(key);
 			delete translations[key];
+		}
+	}
+
+	/**
+	 * Updates the meta data of a key
+	 * @param {String} key Key to update
+	 * @param {Object} newData key value pairs of data to update
+	 */
+	function updateKey(key, newData) {
+		if(newData) {
+			for(var i in newData) {
+				translations[key].meta[i] = newData[i];
+			}
 		}
 	}
 
@@ -167,7 +181,7 @@ module.exports = function(options) {
 	function keyExists(key) {
 		return !!translations[key];
 	}
-	
+
 	/**
 	 * Returns the stored metainformation about a key
 	 * @param {String} key The key
@@ -177,10 +191,10 @@ module.exports = function(options) {
 	 */
 	function getMeta(key) {
 		if (!translations[key]) throw new Error('Key doesn\'t exist');
-		
+
 		return translations[key].meta;
 	}
-	
+
 	/**
 	 * Returns all actually defined keys with meta data
 	 * @returns {Object} keys are keys, and value is object containing the metadata
@@ -192,7 +206,7 @@ module.exports = function(options) {
 		});
 		return result;
 	}
-	
+
 	/**
 	 * Returns list of all defined langauages for this ressouce
 	 * @param {String} key The key
@@ -202,13 +216,13 @@ module.exports = function(options) {
 	 */
 	function getDefinedLanguages(key) {
 		if (!translations[key]) throw new Error('Key doesn\'t exist');
-		
+
 		if (!translations[key].translations) {
 			return [];
 		}
 		return Object.keys(translations[key].translations);
 	}
-	
+
 	/**
 	 * Saves the actual version of all translations using the defined storage engine
 	 */
@@ -219,7 +233,7 @@ module.exports = function(options) {
 			toDelete = [];
 		}
 	}
-	
+
 	/**
 	 * Loads all translations from storage engine
 	 */
@@ -232,7 +246,7 @@ module.exports = function(options) {
 			callback();
 		});
 	}
-	
+
 	return {
 		getText:               getText,
 		getTranslations:       getTranslations,
@@ -240,6 +254,7 @@ module.exports = function(options) {
 		storeTranslation:      storeTranslation,
 		createKey:             createKey,
 		deleteKey:             deleteKey,
+		updateKey:             updateKey,
 		keyExists:             keyExists,
 		getMeta:               getMeta,
 		getAllMetadata:        getAllMetadata,
