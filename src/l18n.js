@@ -45,8 +45,10 @@ module.exports = function(options) {
 		options.count = options.count || 0;
 		var value = getPlainText(key, lang, options.count);
 
-		for (var i in options) {
-			value = value.replace(new RegExp('{' + i + '}', 'g'), options[i]);
+		if (value) {
+			for (var i in options) {
+				value = value.replace(new RegExp('{' + i + '}', 'g'), options[i]);
+			}
 		}
 		return value;
 	}

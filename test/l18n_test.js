@@ -232,6 +232,7 @@ var testSuite2;
 			test.equal(l2.getText('paladin', 'en', { count: 0, name: 'Tim' }), 'More Paladins named Tim', 'should return plural when count is 0 or not set and parse name into it');
 			test.equal(l2.getText('paladin', 'en', { count: 1, name: 'Bob' }), 'One Paladin named Bob', 'should return singular when count is 1 and parse name if set');
 			test.equal(l2.getText('paladin', 'en', { count: 1, named: 'Bob' }), 'One Paladin named {name}', 'should return singular when count is 1 and parse nothing if name is not set');
+			test.equal(l2.getText('paladin', 'de', { count: 2 }), false, 'should return false if text doesn\'t exist in this language');
 			test.finish();
 		},
 		'testing method keyExists': function(test) {
@@ -384,6 +385,7 @@ var testSuite2;
 			test.equal(l2.getPlainText('paladin', 'en', 2), 'More Paladins named {name}', 'should get plain text in plural version when told to do so');
 			test.equal(l2.getPlainText('paladin', 'en', 0), 'More Paladins named {name}', 'should get plain text in plural version when told to do so');
 			test.equal(l2.getPlainText('paladin', 'en', 1), 'One Paladin named {name}', 'should get plain text in singular version when told to do so');
+			test.equal(l2.getPlainText('paladin', 'de', 1), false, 'should return false if text doesn\'t exist in this language');
 			test.finish();
 		}
 	};
