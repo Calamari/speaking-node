@@ -36,7 +36,7 @@ module.exports = function(options) {
 	 * @param {String} lang For which language is this translation?
 	 * @param {Object} [vars] Some vars that are parsed into the ressource, specials:
 	 *						count: used also for choosing between singular and plural version
-	 * @returns {String|false} The translated text or empty string if it doesn't exists
+	 * @returns {String|false} The translated text or false if it doesn't exists
 	 *
 	 * @throws 'Key doesn\'t exist'-Exception if key doesn't exist ;-)
 	 */
@@ -56,20 +56,20 @@ module.exports = function(options) {
 	 * @param {String} key The storage key
 	 * @param {String} lang For which language is this translation?
 	 * @param {Number} [count] For which count we are getting the ressource for? (for deciding between singular and plural version)
-	 * @returns {String|false} The translated but unparsed text or empty string if it doesn't exists
+	 * @returns {String|false} The translated but unparsed text or false if it doesn't exists
 	 *
 	 * @throws 'Key doesn\'t exist'-Exception if key doesn't exist ;-)
 	 */
 	function getPlainText(key, lang, count) {
-		count = count || 0;
 		if (!translations[key]) throw new Error('Key doesn\'t exist');
+		count = count || 0;
 
 		if (!translations[key].translations || !translations[key].translations[lang]) {
 			return false;
 		}
 
-		var len           = translations[key].translations[lang].length,
-			obj           = translations[key].translations[lang][len-1],
+		var len = translations[key].translations[lang].length,
+			obj = translations[key].translations[lang][len-1],
 			value;
 		if (typeof obj.value == 'string') {
 			value = obj.value;
