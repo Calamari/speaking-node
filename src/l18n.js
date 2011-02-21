@@ -36,13 +36,32 @@ module.exports = function(options) {
 	 * @param {String} lang For which language is this translation?
 	 * @param {Object} [vars] Some vars that are parsed into the ressource, specials:
 	 *						count: used also for choosing between singular and plural version
-	 * @returns {String|false} The translated text or false if it doesn't exists
+	 * @returns {String|false} The translated text or empty string if it doesn't exists
 	 *
 	 * @throws 'Key doesn\'t exist'-Exception if key doesn't exist ;-)
 	 */
 	function getText(key, lang, options) {
 		options = options || {};
 		options.count = options.count || 0;
+		var value = getPlainText(key, lang, options.count);
+
+		for (var i in options) {
+			value = value.replace(new RegExp('{' + i + '}', 'g'), options[i]);
+		}
+		return value;
+	}
+
+	/**
+	 * Returns the translated but unparsed ressource in given language
+	 * @param {String} key The storage key
+	 * @param {String} lang For which language is this translation?
+	 * @param {Number} [count] For which count we are getting the ressource for? (for deciding between singular and plural version)
+	 * @returns {String|false} The translated but unparsed text or empty string if it doesn't exists
+	 *
+	 * @throws 'Key doesn\'t exist'-Exception if key doesn't exist ;-)
+	 */
+	function getPlainText(key, lang, count) {
+		count = count || 0;
 		if (!translations[key]) throw new Error('Key doesn\'t exist');
 
 		if (!translations[key].translations || !translations[key].translations[lang]) {
@@ -55,12 +74,9 @@ module.exports = function(options) {
 		if (typeof obj.value == 'string') {
 			value = obj.value;
 		} else {
-			value = options.count === 1 ? obj.value[0] : obj.value[1];
+			value = count === 1 ? obj.value[0] : obj.value[1];
 		}
 
-		for (var i in options) {
-			value = value.replace(new RegExp('{' + i + '}', 'g'), options[i]);
-		}
 		return value;
 	}
 
@@ -284,6 +300,7 @@ module.exports = function(options) {
 
 	return {
 		getText:               getText,
+		getPlainText:          getPlainText,
 		getTranslations:       getTranslations,
 		getTranslationHistory: getTranslationHistory,
 		getAllOfLanguage:      getAllOfLanguage,

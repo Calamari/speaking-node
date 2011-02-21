@@ -375,6 +375,16 @@ var testSuite2;
 				test.equal(deTexts.testtwo, 'Feuerbar', 'testtwo should be  german translated to Feuerbar');
 				test.finish();
 			});
+		},
+		'test getting a plain text version without parsing vars inside': function(test) {
+			var l2 = new L18n();
+			l2.createKey('paladin');
+			l2.storeTranslation('paladin', 'en', ['One Paladin named {name}', 'More Paladins named {name}']);
+			test.equal(l2.getPlainText('paladin', 'en'), 'More Paladins named {name}', 'should get plain text in plural version when nothing is said');
+			test.equal(l2.getPlainText('paladin', 'en', 2), 'More Paladins named {name}', 'should get plain text in plural version when told to do so');
+			test.equal(l2.getPlainText('paladin', 'en', 0), 'More Paladins named {name}', 'should get plain text in plural version when told to do so');
+			test.equal(l2.getPlainText('paladin', 'en', 1), 'One Paladin named {name}', 'should get plain text in singular version when told to do so');
+			test.finish();
 		}
 	};
 })();
