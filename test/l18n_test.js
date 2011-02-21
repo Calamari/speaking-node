@@ -1,28 +1,30 @@
-var test   = require('testosterone')({ title: 'l18n module'}),
-	assert = test.assert,
-	L18n   = require('../src/l18n.js');
+var async_test  = require('async_testing'),
+	wrap        = async_test.wrap,
+	L18n        = require('../src/l18n.js');
 
 var saveWasCalled = 0,
 	deleteWasCalled = 0;
+	
+var testAssert;
 var stubStorageEngine = function() {
 	return {
 		save: function(translations) {
 			++saveWasCalled;
 			if (saveWasCalled === 1) {
-				assert.equal(Object.keys(translations).length, 3, 'there should be three text ressources to save');
-				assert.equal(Object.keys(translations['empty'].translations).length, 0, 'there should be no translation for ressource empty');
-				assert.equal(translations['empty'].meta.val, 'foo', 'metadata should also be given to storage engine to save');
+				testAssert.equal(Object.keys(translations).length, 3, 'there should be three text ressources to save');
+				testAssert.equal(Object.keys(translations['empty'].translations).length, 0, 'there should be no translation for ressource empty');
+				testAssert.equal(translations['empty'].meta.val, 'foo', 'metadata should also be given to storage engine to save');
 	
-				assert.equal(Object.keys(translations['test'].translations).length, 2, 'there should be two translation for ressource test');
-				assert.equal(translations['test'].translations['en'].length, 4, 'there should be two translation into english for ressource test');
-				assert.equal(translations['test'].translations['en'][1].value, 'I am no legend', 'the actual translation of test into english should be "I am no legend"');
-				assert.equal(translations['test'].translations['en'][1].author, 'author3', 'the author of the actual translation of test into english should be "author3"');
+				testAssert.equal(Object.keys(translations['test'].translations).length, 2, 'there should be two translation for ressource test');
+				testAssert.equal(translations['test'].translations['en'].length, 4, 'there should be two translation into english for ressource test');
+				testAssert.equal(translations['test'].translations['en'][1].value, 'I am no legend', 'the actual translation of test into english should be "I am no legend"');
+				testAssert.equal(translations['test'].translations['en'][1].author, 'author3', 'the author of the actual translation of test into english should be "author3"');
 	
-				assert.equal(Object.keys(translations['values'].translations).length, 1, 'there should be one translation for ressource values');
+				testAssert.equal(Object.keys(translations['values'].translations).length, 1, 'there should be one translation for ressource values');
 			}
 		},
 		load: function(callback) {
-			callback({
+			callback(null, {
 				'test1': {
 					'meta': {
 						'creator': 'Chuck',
@@ -58,8 +60,8 @@ var stubStorageEngine = function() {
 		},
 		delete: function(keys) {
 			++deleteWasCalled;
-			assert.ok(keys.indexOf('empty') !== -1, 'empty should be marked as deleted');
-			assert.ok(keys.indexOf('values') !== -1, 'values should be marked as deleted');
+			testAssert.ok(keys.indexOf('empty') !== -1, 'empty should be marked as deleted');
+			testAssert.ok(keys.indexOf('values') !== -1, 'values should be marked as deleted');
 		}
 	};
 };
@@ -67,251 +69,289 @@ var stubStorageEngine = function() {
 
 var l = new L18n();
 
-test
-	.add('creating a key without meta data works fine', function(spec) {
+var testSuite = {
+	'creating a key without meta data works fine': function(test) {
 		var now = new Date();
 		l.createKey('test.me');
 		var meta = l.getMeta('test.me');
 
-		assert.equal(Object.keys(meta).length, 1, "there should be only one meta information set");
-		assert.ok(meta.createdAt, "createdAt should be set in meta");
-		assert.ok(meta.createdAt >= now && meta.createdAt <= new Date(), "the createdAt time is set correctly")
-	})
-	.add('creating a key with some more meta data works fine too', function(spec) {
-			l.createKey('test.more', {
-				author:      'Chuck Norris',
-				description: 'A text to rule the world',
-				something:   'Nonsense'
-			});
-			var meta = l.getMeta('test.more');
+		test.equal(Object.keys(meta).length, 1, "there should be only one meta information set");
+		test.ok(meta.createdAt, "createdAt should be set in meta");
+		test.ok(meta.createdAt >= now && meta.createdAt <= new Date(), "the createdAt time is set correctly");
+		test.finish();
+	},
+	'creating a key with some more meta data works fine too': function(test) {
+		l.createKey('test.more', {
+			author:      'Chuck Norris',
+			description: 'A text to rule the world',
+			something:   'Nonsense'
+		});
+		var meta = l.getMeta('test.more');
 
-			assert.equal(Object.keys(meta).length, 4, "there should be only one meta information set");
-			assert.equal(meta.author, 'Chuck Norris', 'Name should be correctly'),
-			assert.equal(meta.description, 'A text to rule the world', 'Description should be correctly'),
-			assert.equal(meta.something, 'Nonsense', 'some more information can be appended'),
+		test.equal(Object.keys(meta).length, 4, "there should be only one meta information set");
+		test.equal(meta.author, 'Chuck Norris', 'Name should be correctly'),
+		test.equal(meta.description, 'A text to rule the world', 'Description should be correctly'),
+		test.equal(meta.something, 'Nonsense', 'some more information can be appended'),
 
 
-			meta = l.getMeta('test.me');
-			assert.equal(Object.keys(meta).length, 1, 'The meta data of previously set key shouldn\'t have changed');
-	})
-	.add('creating a already existing key throws up', function(spec) {
-		assert.throws(function() {
+		meta = l.getMeta('test.me');
+		test.equal(Object.keys(meta).length, 1, 'The meta data of previously set key shouldn\'t have changed');
+		test.finish();
+	},
+	'creating a already existing key throws up': function(test) {
+		test.throws(function() {
 			l.createKey('test.me');
 		}, Error, 'should have thrown');
-	})
-	.add('similar looking keys shouldn\'t throw', function(spec) {
+		test.finish();
+	},
+	'similar looking keys shouldn\'t throw': function(test) {
 		l.createKey('test.memore');
 		l.createKey('test');
-	})
-	.add('retrieving a non existent key should throw', function(spec) {
-		assert.throws(function() {
+		test.finish();
+	},
+	'retrieving a non existent key should throw': function(test) {
+		test.throws(function() {
 			l.getMeta('testmeyeah');
 		}, Error, 'should have thrown');
+		test.finish();
+	}
+};
+
+var testSuite2;
+(function() {
+	var l = new L18n({
+		storageEngine: stubStorageEngine
 	});
-
-l = new L18n({
-	storageEngine: stubStorageEngine
-});
-l.createKey('test');
-l.createKey('empty', { val: 'foo' });
-l.createKey('values');
-test
-	.add('adding the first translation', function(spec) {
+	l.createKey('test');
+	l.createKey('empty', { val: 'foo' });
+	l.createKey('values');
+	
+	testSuite2 = {
+		'adding the first translation': function(test) {
 			l.storeTranslation('test', 'en', 'I am legend');
-			assert.equal(l.getText('test', 'en'), 'I am legend');
+			test.equal(l.getText('test', 'en'), 'I am legend');
 			var locals = l.getTranslations('test');
-			assert.equal(Object.keys(locals).length, 1, 'There should be one translation for key test');
-	})
-	.add('adding the second translation', function(spec) {
+			test.equal(Object.keys(locals).length, 1, 'There should be one translation for key test');
+			test.finish();
+		},
+		'adding the second translation': function(test) {
 			l.storeTranslation('test', 'de', 'I bin ein Held', 'author2');
-			assert.equal(l.getText('test', 'de'), 'I bin ein Held');
-			assert.equal(l.getText('test', 'en'), 'I am legend', 'Should\'t have changed the other language');
-
+			test.equal(l.getText('test', 'de'), 'I bin ein Held');
+			test.equal(l.getText('test', 'en'), 'I am legend', 'Should\'t have changed the other language');
+	
 			var locals = l.getTranslations('test');
-			assert.equal(Object.keys(locals).length, 2, 'There should be two translations for key test now');
-	})
-	.add('adding a new translation for already translated key/locale', function(spec) {
+			test.equal(Object.keys(locals).length, 2, 'There should be two translations for key test now');
+			test.finish();
+		},
+		'adding a new translation for already translated key/locale': function(test) {
 			l.storeTranslation('test', 'en', 'I am no legend', 'author3');
-			assert.equal(l.getText('test', 'en'), 'I am no legend', 'text should have changed now');
-
+			test.equal(l.getText('test', 'en'), 'I am no legend', 'text should have changed now');
+	
 			var locals = l.getTranslations('test');
-			assert.equal(Object.keys(locals).length, 2, 'There should still be two translations for key test');
-	})
-	.add('testing all value possibilities', function(spec) {
-		assert.throws(function() {
-			l.storeTranslation('values', 'en', {});
-		});
-		assert.throws(function() {
-			l.storeTranslation('values', 'en', 23);
-		});
-		assert.throws(function() {
-			l.storeTranslation('values', 'en', []);
-		});
-		assert.throws(function() {
-			l.storeTranslation('values', 'en', ['ferfaer']);
-		});
-		assert.throws(function() {
-			l.storeTranslation('values', 'en', ['babs', 'bla', 'blubb']);
-		});
-		assert.throws(function() {
-			l.storeTranslation('values', 'en', ['babs', 42]);
-		});
-		l.storeTranslation('values', 'en', ['hey', 'ho']);
-		l.storeTranslation('values', 'en', 'masterpiece');
-	})
-	.add('getting the english History', function(spec) {
-		var h = l.getTranslationHistory('test', 'en');
-		assert.equal(h.length, 2, 'it has two entries');
-
-		assert.equal(h[0].author, '', 'it\'s first entry has no author');
-		assert.equal(h[1].author, 'author3', 'it\'s second entry is of author3');
-		assert.equal(h[0].modifiedAt.constructor, Date, 'it\'s first enry has a modified Date set');
-		assert.equal(h[1].modifiedAt.constructor, Date, 'it\'s second entry has a modified Date set');
-	})
-	.add('getting the german History', function(spec) {
-		var h = l.getTranslationHistory('test', 'de');
-
-		assert.equal(h.length, 1, 'it has one entry');
-		assert.equal(h[0].author, 'author2', 'it is of author2');
-		assert.equal(h[0].modifiedAt.constructor, Date, 'it has a modified Date set');
-	})
-	.add('getting a History of not set language', function(spec) {
-		var h = l.getTranslationHistory('test', 'es');
-		
-		assert.ok(h === false, 'is empty');
-	})
-	.add('and trying to translate an unknown key', function(spec) {
-		assert.throws(function() {
-			l.storeTranslation('testing', 'en', 'I dont work');
-		}, Error);
-	})
-	.add('adding a translation with singular and plural', function(spec) {
-		l.storeTranslation('test', 'en', ['friend', 'friends']);
-		assert.equal(l.getText('test', 'en'), 'friends', 'should return plural when count is 0 or not set');
-		assert.equal(l.getText('test', 'en', { count: 0 }), 'friends', 'should return plural when count is 0 or not set');
-		assert.equal(l.getText('test', 'en', { count: 1 }), 'friend', 'should return singular when count is 1 or not set');
-		assert.equal(l.getText('test', 'en', { count: 2 }), 'friends', 'should return plural when count is 2 or more');
-	})
-	.add('adding a translation with some vars in singular and plural', function(spec) {
-		l.storeTranslation('test', 'en', ['{count} friend, {count}', '{count} friends, {count}']);
-		assert.equal(l.getText('test', 'en'), '0 friends, 0', 'should return plural when count is not set and parse count into it');
-		assert.equal(l.getText('test', 'en', { count: 0 }), '0 friends, 0', 'should return plural when count is 0 or not set and parse count into it');
-		assert.equal(l.getText('test', 'en', { count: 1 }), '1 friend, 1', 'should return singular when count is 1 or not set and parse count into it');
-		assert.equal(l.getText('test', 'en', { count: 3 }), '3 friends, 3', 'should return plural when count is 3 or more and parse count into it');
-	})
-	.add('testing method keyExists', function(spec) {
-		assert.ok(l.keyExists('test'), 'test should exist');
-		assert.ok(!l.keyExists('test.me'), 'test should not exist');
-		assert.ok(!l.keyExists(''), ' should not exist');
-	})
-	.add('testing method getDefinedLanguages', function(spec) {
-		var langs = l.getDefinedLanguages('test');
-		assert.equal(langs.length, 2, 'test should be translated into 2 languages');
-		assert.ok(langs.indexOf('de') !== -1, 'test should be translated into de');
-		assert.ok(langs.indexOf('en') !== -1, 'test should be translated into en');
-	})
-	.add('testing flushing to storage engine', function(spec) {
-		l.flush();
-		assert.equal(saveWasCalled, 1, 'The save method of storage engine should be called');
-		assert.equal(deleteWasCalled, 0, 'The delete method of storage engine should not be called, because nothing was marked as deleted');
-	})
-	.add('testing loading from storage engine', function(spec) {
-		l.load(function() {
-			// old data should still be there
-			assert.equal(l.getText('test', 'en'), '0 friends, 0', 'ressource test should still be there');
-			assert.equal(l.getText('test1', 'en'), 'Test me', 'ressource test1 should be loaded');
-			assert.equal(l.getText('testtwo', 'en'), 'Foobar', 'ressource testtwo should be loaded now');
-			assert.equal(l.getText('testtwo', 'de'), 'Feuerbar', 'ressource testtwo should be loaded now also in german');
+			test.equal(Object.keys(locals).length, 2, 'There should still be two translations for key test');
+			test.finish();
+		},
+		'testing all value possibilities': function(test) {
+			test.throws(function() {
+				l.storeTranslation('values', 'en', {});
+			});
+			test.throws(function() {
+				l.storeTranslation('values', 'en', 23);
+			});
+			test.throws(function() {
+				l.storeTranslation('values', 'en', []);
+			});
+			test.throws(function() {
+				l.storeTranslation('values', 'en', ['ferfaer']);
+			});
+			test.throws(function() {
+				l.storeTranslation('values', 'en', ['babs', 'bla', 'blubb']);
+			});
+			test.throws(function() {
+				l.storeTranslation('values', 'en', ['babs', 42]);
+			});
+			l.storeTranslation('values', 'en', ['hey', 'ho']);
+			l.storeTranslation('values', 'en', 'masterpiece');
+			test.finish();
+		},
+		'getting the english History': function(test) {
+			var h = l.getTranslationHistory('test', 'en');
+			test.equal(h.length, 2, 'it has two entries');
 	
-			var meta = l.getMeta('test1');
-			assert.equal(meta.creator, 'Chuck', 'creator of test1 should be Chuck');
-			meta = l.getMeta('testtwo');
-			assert.equal(meta.creator, 'Chucky', 'creator of testtwo should be Chucky');
+			test.equal(h[0].author, '', 'it\'s first entry has no author');
+			test.equal(h[1].author, 'author3', 'it\'s second entry is of author3');
+			test.equal(h[0].modifiedAt.constructor, Date, 'it\'s first enry has a modified Date set');
+			test.equal(h[1].modifiedAt.constructor, Date, 'it\'s second entry has a modified Date set');
+			test.finish();
+		},
+		'getting the german History': function(test) {
+			var h = l.getTranslationHistory('test', 'de');
 	
-			var langs = l.getDefinedLanguages('testtwo');
-			assert.equal(langs.length, 2, 'test should be translated into 2 languages');
-			assert.ok(langs.indexOf('de') !== -1, 'test should be translated into de');
-			assert.ok(langs.indexOf('en') !== -1, 'test should be translated into en');
+			test.equal(h.length, 1, 'it has one entry');
+			test.equal(h[0].author, 'author2', 'it is of author2');
+			test.equal(h[0].modifiedAt.constructor, Date, 'it has a modified Date set');
+			test.finish();
+		},
+		'getting a History of not set language': function(test) {
+			var h = l.getTranslationHistory('test', 'es');
 	
-			var h = l.getTranslationHistory('testtwo', 'en');
-			assert.equal(h.length, 1, 'testtwo should have 1 english translation');
-			assert.ok(h[0].author, 'Bill', 'the english of testtwo should come from Bill');
-		});
-	})
-	.add('testing deletion of keys', function(spec) {
-		l.deleteKey('empty');
-		l.deleteKey('values');
-		assert.throws(function() {
-			l.getMeta('empty');
-		}, Error, 'there should be no key empty anymore');
-		assert.throws(function() {
-			l.getText('values', 'en');
-		}, Error, 'there should be no key values anymore');
-		assert.throws(function() {
-			l.getTranslations('values');
-		}, Error, 'there should be no key values anymore');
-
-		l.flush();
-		assert.equal(deleteWasCalled, 1, 'The delete method of storage engine should now be called');
-	})
-	.add('testing getting of all keys with metas', function(spec) {
-		l.createKey('bla', { creator: 'me' });
-		var data = l.getAllMetadata();
-
-		assert.equal(Object.keys(data).length, 4, 'There should be two keys');
-		assert.ok(data.bla, 'key bla should exists');
-		assert.ok(data.test, 'key test should exists');
-		assert.ok(data.test1, 'key test should exists');
-		assert.ok(data.testtwo, 'key test should exists');
-		assert.equal(Object.keys(data.test).length, 1, 'key test should have no meta data except createdAt');
-		assert.ok(data.test.createdAt, 'key test should have no meta data except createdAt');
-		assert.equal(data.bla.creator, 'me', 'key bla should have a creator as meta data');
-	})
-	.add('testing updating of key meta data', function(spec) {
-		var origData = l.getMeta('bla');
-		var createdAt = origData.createdAt;
-
-		l.updateKey('bla', { creator: 'not me', more: 'something' });
-		var data = l.getMeta('bla');
-		assert.equal(Object.keys(data).length, 3, 'There should be three meta data now');
-		assert.equal(data.creator, 'not me', 'the creator should now be not me');
-		assert.equal(data.more, 'something', 'more data should be appended');
-		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
-
-		l.updateKey('bla', { creator: 'me' });
-		data = l.getMeta('bla');
-		assert.equal(Object.keys(data).length, 3, 'There should still be three meta data');
-		assert.equal(data.creator, 'me', 'the creator should again be not me');
-		assert.equal(data.more, 'something', 'more data should still be there');
-
-		l.updateKey('bla');
-		data = l.getMeta('bla');
-		assert.equal(Object.keys(data).length, 3, 'There should still be three meta data');
-		assert.equal(data.creator, 'me', 'the creator should not have changed');
-		assert.equal(data.more, 'something', 'more data should not have changed');
-		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
-	})
-	.add('testing renaming of a key', function(spec) {
-		var origData = l.getMeta('bla');
-		var createdAt = origData.createdAt;
-
-		l.renameKey('bla', 'blubb');
-		assert.ok(!l.keyExists('bla'), 'Key bla should not exist anymore');
-		
-		var data = l.getMeta('blubb');
-		assert.equal(Object.keys(data).length, 3, 'There should be three meta data');
-		assert.equal(data.creator, 'me', 'the creator should not have changed');
-		assert.equal(data.more, 'something', 'more data should not have changed');
-		assert.equal(data.createdAt, createdAt, 'createdAt should not have changed');
-		assert.throws(function() {
-			l.renameKey('blubb', 'test');
-		}, Error, 'renaming into an already existing key should throw an error');
-		assert.throws(function() {
-			l.renameKey('notthere', 'notthereeither');
-		}, Error, 'renaming of a not existing key should throw an error');
-	})
+			test.ok(h === false, 'is empty');
+			test.finish();
+		},
+		'and trying to translate an unknown key': function(test) {
+			test.throws(function() {
+				l.storeTranslation('testing', 'en', 'I dont work');
+			}, Error);
+			test.finish();
+		},
+		'adding a translation with singular and plural': function(test) {
+			l.storeTranslation('test', 'en', ['friend', 'friends']);
+			test.equal(l.getText('test', 'en'), 'friends', 'should return plural when count is 0 or not set');
+			test.equal(l.getText('test', 'en', { count: 0 }), 'friends', 'should return plural when count is 0 or not set');
+			test.equal(l.getText('test', 'en', { count: 1 }), 'friend', 'should return singular when count is 1 or not set');
+			test.equal(l.getText('test', 'en', { count: 2 }), 'friends', 'should return plural when count is 2 or more');
+			test.finish();
+		},
+		'adding a translation with some vars in singular and plural': function(test) {
+			l.storeTranslation('test', 'en', ['{count} friend, {count}', '{count} friends, {count}']);
+			test.equal(l.getText('test', 'en'), '0 friends, 0', 'should return plural when count is not set and parse count into it');
+			test.equal(l.getText('test', 'en', { count: 0 }), '0 friends, 0', 'should return plural when count is 0 or not set and parse count into it');
+			test.equal(l.getText('test', 'en', { count: 1 }), '1 friend, 1', 'should return singular when count is 1 or not set and parse count into it');
+			test.equal(l.getText('test', 'en', { count: 3 }), '3 friends, 3', 'should return plural when count is 3 or more and parse count into it');
+			test.finish();
+		},
+		'testing method keyExists': function(test) {
+			test.ok(l.keyExists('test'), 'test should exist');
+			test.ok(!l.keyExists('test.me'), 'test should not exist');
+			test.ok(!l.keyExists(''), ' should not exist');
+			test.finish();
+		},
+		'testing method getDefinedLanguages': function(test) {
+			var langs = l.getDefinedLanguages('test');
+			test.equal(langs.length, 2, 'test should be translated into 2 languages');
+			test.ok(langs.indexOf('de') !== -1, 'test should be translated into de');
+			test.ok(langs.indexOf('en') !== -1, 'test should be translated into en');
+			test.finish();
+		},
+		'testing flushing to storage engine': function(test) {
+			testAssert = test;
+			l.flush();
+			test.equal(saveWasCalled, 1, 'The save method of storage engine should be called');
+			test.equal(deleteWasCalled, 0, 'The delete method of storage engine should not be called, because nothing was marked as deleted');
+			test.finish();
+		},
+		'testing loading from storage engine': function(test) {
+			l.load(function() {
+				// old data should still be there
+				test.equal(l.getText('test', 'en'), '0 friends, 0', 'ressource test should still be there');
+				test.equal(l.getText('test1', 'en'), 'Test me', 'ressource test1 should be loaded');
+				test.equal(l.getText('testtwo', 'en'), 'Foobar', 'ressource testtwo should be loaded now');
+				test.equal(l.getText('testtwo', 'de'), 'Feuerbar', 'ressource testtwo should be loaded now also in german');
+	
+				var meta = l.getMeta('test1');
+				test.equal(meta.creator, 'Chuck', 'creator of test1 should be Chuck');
+				meta = l.getMeta('testtwo');
+				test.equal(meta.creator, 'Chucky', 'creator of testtwo should be Chucky');
+	
+				var langs = l.getDefinedLanguages('testtwo');
+				test.equal(langs.length, 2, 'test should be translated into 2 languages');
+				test.ok(langs.indexOf('de') !== -1, 'test should be translated into de');
+				test.ok(langs.indexOf('en') !== -1, 'test should be translated into en');
+	
+				var h = l.getTranslationHistory('testtwo', 'en');
+				test.equal(h.length, 1, 'testtwo should have 1 english translation');
+				test.ok(h[0].author, 'Bill', 'the english of testtwo should come from Bill');
+				test.finish();
+			});
+		},
+		'testing deletion of keys': function(test) {
+			testAssert = test;
+			l.deleteKey('empty');
+			l.deleteKey('values');
+			test.throws(function() {
+				l.getMeta('empty');
+			}, Error, 'there should be no key empty anymore');
+			test.throws(function() {
+				l.getText('values', 'en');
+			}, Error, 'there should be no key values anymore');
+			test.throws(function() {
+				l.getTranslations('values');
+			}, Error, 'there should be no key values anymore');
+	
+			l.flush();
+			test.equal(deleteWasCalled, 1, 'The delete method of storage engine should now be called');
+			test.finish();
+		},
+		'testing getting of all keys with metas': function(test) {
+			l.createKey('bla', { creator: 'me' });
+			var data = l.getAllMetadata();
+	
+			test.equal(Object.keys(data).length, 4, 'There should be two keys');
+			test.ok(data.bla, 'key bla should exists');
+			test.ok(data.test, 'key test should exists');
+			test.ok(data.test1, 'key test should exists');
+			test.ok(data.testtwo, 'key test should exists');
+			test.equal(Object.keys(data.test).length, 1, 'key test should have no meta data except createdAt');
+			test.ok(data.test.createdAt, 'key test should have no meta data except createdAt');
+			test.equal(data.bla.creator, 'me', 'key bla should have a creator as meta data');
+			test.finish();
+		},
+		'testing updating of key meta data': function(test) {
+			var origData = l.getMeta('bla');
+			var createdAt = origData.createdAt;
+	
+			l.updateKey('bla', { creator: 'not me', more: 'something' });
+			var data = l.getMeta('bla');
+			test.equal(Object.keys(data).length, 3, 'There should be three meta data now');
+			test.equal(data.creator, 'not me', 'the creator should now be not me');
+			test.equal(data.more, 'something', 'more data should be appended');
+			test.equal(data.createdAt, createdAt, 'createdAt should not have changed');
+	
+			l.updateKey('bla', { creator: 'me' });
+			data = l.getMeta('bla');
+			test.equal(Object.keys(data).length, 3, 'There should still be three meta data');
+			test.equal(data.creator, 'me', 'the creator should again be not me');
+			test.equal(data.more, 'something', 'more data should still be there');
+	
+			l.updateKey('bla');
+			data = l.getMeta('bla');
+			test.equal(Object.keys(data).length, 3, 'There should still be three meta data');
+			test.equal(data.creator, 'me', 'the creator should not have changed');
+			test.equal(data.more, 'something', 'more data should not have changed');
+			test.equal(data.createdAt, createdAt, 'createdAt should not have changed');
+			test.finish();
+		},
+		'testing renaming of a key': function(test) {
+			var origData = l.getMeta('bla');
+			var createdAt = origData.createdAt;
+	
+			l.renameKey('bla', 'blubb');
+			test.ok(!l.keyExists('bla'), 'Key bla should not exist anymore');
+	
+			var data = l.getMeta('blubb');
+			test.equal(Object.keys(data).length, 3, 'There should be three meta data');
+			test.equal(data.creator, 'me', 'the creator should not have changed');
+			test.equal(data.more, 'something', 'more data should not have changed');
+			test.equal(data.createdAt, createdAt, 'createdAt should not have changed');
+			test.throws(function() {
+				l.renameKey('blubb', 'test');
+			}, Error, 'renaming into an already existing key should throw an error');
+			test.throws(function() {
+				l.renameKey('notthere', 'notthereeither');
+			}, Error, 'renaming of a not existing key should throw an error');
+			test.finish();
+		}
+	};
+})();
 	// TODO: test überschneidungen (sortiert nach times) check nach meta gleichness (author & createdAt)?
 	// TODO: exporting nach languages und only key: texts
-	.serial(function() {
-		console.log('Translations should be working!');
-	});
+
+for(var i in testSuite2) {
+	testSuite[i] = testSuite2[i];
+}
+
+module.exports = testSuite;
+
+if (module === require.main) {
+  return async_test.run(__filename, process.ARGV);
+}
