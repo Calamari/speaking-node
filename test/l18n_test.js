@@ -45,6 +45,10 @@ var stubStorageEngine = function() {
 					},
 					'translations': {
 						'en': [{
+							'value':      'Foobar is old',
+							'author':     'Bob',
+							'modifiedAt': new Date()
+						}, {
 							'value':      'Foobar',
 							'author':     'Bill',
 							'modifiedAt': new Date()
@@ -241,6 +245,7 @@ var testSuite2;
 			test.finish();
 		},
 		'testing loading from storage engine': function(test) {
+			test.numAssertions = 12;
 			l.load(function() {
 				// old data should still be there
 				test.equal(l.getText('test', 'en'), '0 friends, 0', 'ressource test should still be there');
@@ -259,11 +264,13 @@ var testSuite2;
 				test.ok(langs.indexOf('en') !== -1, 'test should be translated into en');
 	
 				var h = l.getTranslationHistory('testtwo', 'en');
-				test.equal(h.length, 1, 'testtwo should have 1 english translation');
-				test.ok(h[0].author, 'Bill', 'the english of testtwo should come from Bill');
+				test.equal(h.length, 2, 'testtwo should have 2 english translation');
+				test.ok(h[0].author, 'Bill', 'the first english of testtwo should come from Bill');
+				test.ok(h[1].author, 'Bob', 'the second english of testtwo should come from Bill');
 				test.finish();
 			});
 		},
+
 		'testing deletion of keys': function(test) {
 			testAssert = test;
 			l.deleteKey('empty');
@@ -340,11 +347,29 @@ var testSuite2;
 				l.renameKey('notthere', 'notthereeither');
 			}, Error, 'renaming of a not existing key should throw an error');
 			test.finish();
+		},
+		'testing if we can get all keys (and texts) with given language': function(test) {
+			test.numAssertions = 5;
+			l = new L18n({
+				storageEngine: stubStorageEngine
+			});
+			l.load(function() {
+				var enTexts = l.getAllOfLanguage('en'),
+					deTexts = l.getAllOfLanguage('de');
+
+				test.equal(Object.keys(enTexts).length, 2, 'should be two english translations');
+				test.equal(Object.keys(deTexts).length, 1, 'should be two german translations');
+
+				test.equal(enTexts.test1, 'Test me', 'test1 should be english translated as Test me');
+				test.equal(enTexts.testtwo, 'Foobar', 'testtwo should be english translated as Foobar');
+				test.equal(deTexts.testtwo, 'Feuerbar', 'testtwo should be  german translated to Feuerbar');
+				test.finish();
+			});
 		}
 	};
 })();
 	// TODO: test überschneidungen (sortiert nach times) check nach meta gleichness (author & createdAt)?
-	// TODO: exporting nach languages und only key: texts
+	// TODO: export method, similar to map
 
 for(var i in testSuite2) {
 	testSuite[i] = testSuite2[i];

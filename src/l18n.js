@@ -99,6 +99,25 @@ module.exports = function(options) {
 		}
 		return translations[key].translations[lang];
 	}
+	
+	/**
+	 * Returns a hash of all translated keys and all there current translation into the given language
+	 * @param {String} lang The language we want old ressources from
+	 * @returns {Object} key is key, the translation is the value
+	 */
+	function getAllOfLanguage(lang) {
+		var result = {},
+			texts;
+
+		for(var k in translations) {
+			texts = translations[k].translations[lang];
+			if (texts && texts.length) {
+				result[k] = texts[texts.length - 1].value;
+			}
+		}
+
+		return result;
+	}
 
 	/**
 	 *
@@ -267,6 +286,7 @@ module.exports = function(options) {
 		getText:               getText,
 		getTranslations:       getTranslations,
 		getTranslationHistory: getTranslationHistory,
+		getAllOfLanguage:      getAllOfLanguage,
 		storeTranslation:      storeTranslation,
 		createKey:             createKey,
 		deleteKey:             deleteKey,
