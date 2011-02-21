@@ -224,6 +224,16 @@ var testSuite2;
 			test.equal(l.getText('test', 'en', { count: 3 }), '3 friends, 3', 'should return plural when count is 3 or more and parse count into it');
 			test.finish();
 		},
+		'adding a translation with some other vars in singular and plural': function(test) {
+			var l2 = new L18n();
+			l2.createKey('paladin');
+			l2.storeTranslation('paladin', 'en', ['One Paladin named {name}', 'More Paladins named {name}']);
+			test.equal(l2.getText('paladin', 'en'), 'More Paladins named {name}', 'should not parse {name} if not set');
+			test.equal(l2.getText('paladin', 'en', { count: 0, name: 'Tim' }), 'More Paladins named Tim', 'should return plural when count is 0 or not set and parse name into it');
+			test.equal(l2.getText('paladin', 'en', { count: 1, name: 'Bob' }), 'One Paladin named Bob', 'should return singular when count is 1 and parse name if set');
+			test.equal(l2.getText('paladin', 'en', { count: 1, named: 'Bob' }), 'One Paladin named {name}', 'should return singular when count is 1 and parse nothing if name is not set');
+			test.finish();
+		},
 		'testing method keyExists': function(test) {
 			test.ok(l.keyExists('test'), 'test should exist');
 			test.ok(!l.keyExists('test.me'), 'test should not exist');
