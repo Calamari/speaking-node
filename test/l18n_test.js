@@ -387,6 +387,119 @@ var testSuite2;
 			test.equal(l2.getPlainText('paladin', 'en', 1), 'One Paladin named {name}', 'should get plain text in singular version when told to do so');
 			test.equal(l2.getPlainText('paladin', 'de', 1), false, 'should return false if text doesn\'t exist in this language');
 			test.finish();
+		},
+		'test getting all entries with defined filter function': function(test) {
+			var l2 = new L18n(),
+				result;
+			l2.createKey('key1', { creator: 'someGuy' });
+			l2.storeTranslation('key1', 'en', ['One Key to rule them all', 'More Keys to rule them all'], 'Bob');
+			l2.createKey('key2', { creator: 'someGuy', more: 'foobar' });
+			l2.storeTranslation('key2', 'en', 'I am translated', 'Bob');
+			l2.storeTranslation('key2', 'en', 'I am translated, again', 'Bill');
+			l2.createKey('key3', { creator: 'someoneElse' });
+			l2.storeTranslation('key3', 'en', 'Hello node!', 'Bill');
+			l2.storeTranslation('key3', 'de', 'Hallo node!', 'Dieter');
+			l2.createKey('key4', { creator: 'someoneEntirelyElse' });
+
+			result = l2.getFiltered(function(key, meta, translation, isActual) {
+				if (key === 'key1') {
+					test.equal(meta.creator, 'someGuy');
+					test.equal(meta.more, null, 'There should be no meta value more on key 1');
+					test.equal(translation.value.constructor, Array, 'The value of key1 should be an array with two elements');
+					test.equal(translation.value.length, 2, 'The value of key1 should be an array with two elements');
+					test.equal(translation.value[0], 'One Key to rule them all', 'The second value should the one one for multiple count');
+					test.equal(translation.value[1], 'More Keys to rule them all', 'The first value should the used for one item');
+					test.equal(translation.lang, 'en');
+					test.equal(translation.author, 'Bob');
+				}
+				if (key === 'key2') {
+					test.equal(meta.creator, 'someGuy');
+					test.equal(meta.more, 'foobar', 'Meta value more of key2 should be foobar');
+					test.equal(translation.lang, 'en', 'key2 should be translated in en only');
+					if (translation.value === 'I am translated') {
+						test.equal(translation.author, 'Bob', 'Bob should have translated key2');
+						test.ok(!isActual, 'this translation should be the older one');
+					} else if (translation.value === 'I am translated, again') {
+						test.equal(translation.author, 'Bill', 'Bob should have translated key2');
+						test.ok(isActual, 'this translation should be the newer one');
+					} else {
+						test.ok(false, 'There should only be only two entries for key2');
+					}
+					test.equal();
+				}
+				if (key === 'key3') {
+					test.equal(meta.creator, 'someoneElse');
+					test.ok(isActual, 'both translations should be actual');
+					if (translation.value === 'Hello node!') {
+						test.equal(translation.author, 'Bill', 'Bob should have translated key2');
+						test.equal(translation.lang, 'en', 'key3 should be translated in en');
+					} else if (translation.value === 'Hallo node!') {
+						test.equal(translation.author, 'Dieter', 'Bob should have translated key2');
+						test.equal(translation.lang, 'de', 'key3 should be translated in de, too');
+					} else {
+						test.ok(false, 'There should only be only two entries for key3');
+					}
+					test.equal();
+				}
+				if (key === 'key4') {
+					test.equal(meta.creator, 'someoneEntirelyElse');
+					test.equal(translation, null, 'There should be no entry for key4, because it isn\'t translated yet');
+				}
+				test.equal();
+				return null;
+			});
+			test.equal(result.length, 0, 'The result array should be emtpy, because always returning null');
+			result = l2.getFiltered(function(key, meta, translation, isActual) {
+				if (key === 'key2') {
+					return {
+						key: key,
+						translator: translation.author,
+						isActual: isActual
+					};
+				}
+				return null;
+			});
+			test.equal(result.length, 2, 'The result array should have the two key2 entries in it.');
+			test.equal(result[0].key, 'key2', 'The result array should have the two key2 entries in it.');
+			test.equal(result[1].key, 'key2', 'The result array should have the two key2 entries in it.');
+			test.equal(result[0].translator, 'Bob', 'The first element should be translated by Bob.');
+			test.equal(result[0].isActual, false, 'The first element should not contain the actual translation.');
+			test.equal(result[1].translator, 'Bill', 'The second element should be translated by Bill.');
+			test.equal(result[1].isActual, true, 'The second element should contain the actual translation.');
+
+			result = l2.getFiltered(function(key, meta, translation, isActual) {
+				if (isActual) {
+					if (Array.isArray(translation.value)) {
+						return [key, meta.creator, translation.lang, translation.value[0], translation.value[1]];
+					} else {
+						return [key, meta.creator, translation.lang, translation.value];
+					}
+				}
+				return null;
+			});
+			test.equal(result.length, 4, 'The result array should have all four actual entries in it.');
+			var key4IsIn = false;
+			for(var i=0; i<result.length; ++i) {
+				test.ok(Array.isArray(result[i]), 'Each result should be an Array');
+				if (result[i].key === 'key4') { key4IsIn = true; }
+			}
+			test.ok(!key4IsIn, 'key4 has no translations and should therefore not be actual');
+
+
+			result = l2.getFiltered(function(key, meta, translation, isActual) {
+				return isActual;
+			});
+			test.equal(result.length, 6, 'The result array should have six entries in it.');
+			var positive = 0,
+				negative = 0;
+			for(var i=0; i<result.length; ++i) {
+				if (result[i] === true) ++positive;
+				if (result[i] === false) ++negative;
+			}
+			test.equal(positive, 4, 'There should be four actual entries');
+			test.equal(negative, 2, 'There should be two not actual entries');
+
+			test.finish();
 		}
 	};
 })();

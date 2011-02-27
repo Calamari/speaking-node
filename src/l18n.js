@@ -277,6 +277,48 @@ module.exports = function(options) {
 	}
 
 	/**
+	 * Returns a filtered list of that what is specifed in the callback. If callback return value is null, element will not be considered in the result.
+	 * @param {Function} callback That is used for filtering, it gets the parameter:
+	 *                       key: what key is actuall processed
+	 *                       meta: the meta data of the key
+	 *                       translation: the translations of the ressource (or null if there aren't any)
+	 *                       isActual: Boolean saying if that translation is the actual one
+	 * @returns {Array}
+	 */
+	function getFiltered(callback) {
+		var result = [],
+			val = null,
+			actual, t, langs, texts;
+		Object.keys(translations).forEach(function(key) {
+			var langs = Object.keys(translations[key].translations);
+			if (langs.length) {
+				langs.forEach(function(lang) {
+					if (translations[key].translations[lang].length) {
+						texts = translations[key].translations[lang];
+						for(var i=0, l=translations[key].translations[lang].length; i<l; ++i) {
+							val = callback(key, translations[key].meta, {
+								lang: lang,
+								value: texts[i].value,
+								author: texts[i].author
+							}, i === l-1);
+							if (val !== null) {
+								result.push(val);
+							}
+						}
+					}
+				});
+			} else {
+				val = callback(key, translations[key].meta, null, false);
+				if (val !== null) {
+					result.push(val);
+				}
+			}
+		});
+		
+		return result;
+	}
+
+	/**
 	 * Saves the actual version of all translations using the defined storage engine
 	 */
 	function flush() {
@@ -315,6 +357,7 @@ module.exports = function(options) {
 		getMeta:               getMeta,
 		getAllMetadata:        getAllMetadata,
 		getDefinedLanguages:   getDefinedLanguages,
+		getFiltered:           getFiltered,
 		flush:                 flush,
 		load:                  load
 	};
